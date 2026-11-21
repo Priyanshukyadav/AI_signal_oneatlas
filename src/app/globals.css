@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background: #09090b;
+  color: #e4e4e7;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  border-color: rgb(39 39 42);
+}
+
+::selection {
+  background: rgba(16, 185, 129, 0.25);
+  color: #fafafa;
+}
