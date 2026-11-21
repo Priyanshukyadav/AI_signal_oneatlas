@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { ArrowRight, BarChart3, Building2, Cpu, FlaskConical } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
+
+export const dynamic = 'force-dynamic'
 import HeroSearch from '@/components/home/HeroSearch'
 import ModelCard, { type ModelCardData } from '@/components/models/ModelCard'
 

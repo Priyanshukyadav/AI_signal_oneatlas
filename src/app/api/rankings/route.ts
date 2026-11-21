@@ -42,6 +42,18 @@ export async function GET(request: NextRequest) {
         model: {
           include: {
             lab: true,
+            providers: {
+              select: {
+                inputPricePer1M: true,
+                outputPricePer1M: true,
+                provider: {
+                  select: {
+                    slug: true,
+                    name: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -50,28 +62,45 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    const rankings = scores.map((entry, index) => ({
-      rank: index + 1,
-      score: entry.score,
-      normalizedScore: selectedBenchmark.maxScore > 0 ? entry.score / selectedBenchmark.maxScore : 0,
-      verified: entry.verified,
-      model: {
-        id: entry.model.id,
-        slug: entry.model.slug,
-        name: entry.model.name,
-        description: entry.model.description,
-        modelType: entry.model.modelType,
-        isOpenWeights: entry.model.isOpenWeights,
-        contextWindow: entry.model.contextWindow,
-        parameterCount: entry.model.parameterCount,
-        releaseDate: entry.model.releaseDate,
-        lab: {
-          id: entry.model.lab.id,
-          slug: entry.model.lab.slug,
-          name: entry.model.lab.name,
+    const rankings = scores.map((entry, index) => {
+      const lowestProvider =
+        entry.model.providers.length > 0
+          ? [...entry.model.providers].sort((a, b) => {
+              if (a.inputPricePer1M !== b.inputPricePer1M) return a.inputPricePer1M - b.inputPricePer1M
+              return a.outputPricePer1M - b.outputPricePer1M
+            })[0]
+          : null
+
+      return {
+        rank: index + 1,
+        score: entry.score,
+        normalizedScore: selectedBenchmark.maxScore > 0 ? entry.score / selectedBenchmark.maxScore : 0,
+        verified: entry.verified,
+        model: {
+          id: entry.model.id,
+          slug: entry.model.slug,
+          name: entry.model.name,
+          description: entry.model.description,
+          modelType: entry.model.modelType,
+          isOpenWeights: entry.model.isOpenWeights,
+          contextWindow: entry.model.contextWindow,
+          parameterCount: entry.model.parameterCount,
+          releaseDate: entry.model.releaseDate,
+          lab: {
+            id: entry.model.lab.id,
+            slug: entry.model.lab.slug,
+            name: entry.model.lab.name,
+          },
+          lowestPricing: lowestProvider
+            ? {
+                inputPricePer1M: lowestProvider.inputPricePer1M,
+                outputPricePer1M: lowestProvider.outputPricePer1M,
+                provider: lowestProvider.provider,
+              }
+            : null,
         },
-      },
-    }))
+      }
+    })
 
     return NextResponse.json({
       data: {

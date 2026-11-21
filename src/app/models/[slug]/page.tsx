@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, Calendar, Cpu, Layers, Plus, Scale, Server } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
+
+export const dynamic = 'force-dynamic'
 import { formatPrice, formatTokens } from '@/lib/formatters'
 import CostCalculator from '@/components/models/CostCalculator'
 import QuickstartSnippet from '@/components/models/QuickstartSnippet'

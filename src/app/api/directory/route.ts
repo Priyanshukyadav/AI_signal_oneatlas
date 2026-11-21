@@ -17,7 +17,7 @@ export async function GET() {
               contextWindow: true,
             },
             orderBy: {
-              releaseDate: 'desc',
+              name: 'asc',
             },
           },
           _count: {
@@ -34,9 +34,14 @@ export async function GET() {
         include: {
           offerings: {
             select: {
-              modelId: true,
               inputPricePer1M: true,
               outputPricePer1M: true,
+              model: {
+                select: {
+                  slug: true,
+                  name: true,
+                },
+              },
             },
           },
           _count: {
@@ -59,6 +64,15 @@ export async function GET() {
       website: lab.website,
       headquarters: lab.headquarters,
       modelCount: lab._count.models,
+      models: lab.models.map((model) => ({
+        id: model.id,
+        slug: model.slug,
+        name: model.name,
+        modelType: model.modelType,
+        isOpenWeights: model.isOpenWeights,
+        releaseDate: model.releaseDate,
+        contextWindow: model.contextWindow,
+      })),
       topModels: lab.models.slice(0, 3).map((model) => ({
         id: model.id,
         slug: model.slug,
@@ -74,6 +88,26 @@ export async function GET() {
       const offeringCount = provider.offerings.length
       const inputTotal = provider.offerings.reduce((sum, offering) => sum + offering.inputPricePer1M, 0)
       const outputTotal = provider.offerings.reduce((sum, offering) => sum + offering.outputPricePer1M, 0)
+      const lowestStarting =
+        offeringCount > 0
+          ? provider.offerings.reduce((lowest, offering) => {
+              if (
+                offering.inputPricePer1M < lowest.inputPricePer1M ||
+                (offering.inputPricePer1M === lowest.inputPricePer1M &&
+                  offering.outputPricePer1M < lowest.outputPricePer1M)
+              ) {
+                return {
+                  inputPricePer1M: offering.inputPricePer1M,
+                  outputPricePer1M: offering.outputPricePer1M,
+                }
+              }
+              return lowest
+            }, { inputPricePer1M: provider.offerings[0].inputPricePer1M, outputPricePer1M: provider.offerings[0].outputPricePer1M })
+          : null
+
+      const supportedModels = Array.from(
+        new Map(provider.offerings.map((offering) => [offering.model.slug, offering.model])).values(),
+      ).sort((a, b) => a.name.localeCompare(b.name))
 
       return {
         id: provider.id,
@@ -81,6 +115,8 @@ export async function GET() {
         name: provider.name,
         website: provider.website,
         supportedModelCount: provider._count.offerings,
+        lowestStartingPrice: lowestStarting,
+        supportedModels,
         averagePricing:
           offeringCount > 0
             ? {
